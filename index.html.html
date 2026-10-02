@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>61 in 43</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f1eb;color:#242424;display:flex;justify-content:center;align-items:center;padding:20px}
+  .card{width:min(430px,100%);background:white;border-radius:24px;padding:28px;box-shadow:0 12px 40px #00000012;text-align:center}
+  h1{margin:0;font-size:42px;letter-spacing:-1px}
+  .sub{color:#777;margin:4px 0 24px}
+  .circle{width:190px;height:190px;border-radius:50%;margin:0 auto 22px;background:conic-gradient(#d08b45 var(--progress),#eee 0);display:grid;place-items:center}
+  .inner{width:158px;height:158px;border-radius:50%;background:white;display:grid;place-items:center}
+  .num{font-size:46px;font-weight:750;line-height:1}
+  .label{color:#777;font-size:14px}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:20px 0}
+  .stat{background:#f7f7f7;border-radius:14px;padding:12px 5px}
+  .stat b{display:block;font-size:20px}
+  .stat span{font-size:12px;color:#777}
+  button{width:100%;border:0;border-radius:15px;padding:15px;font-size:18px;font-weight:700;cursor:pointer;background:#242424;color:white}
+  button:active{transform:scale(.99)}
+  .undo{background:#eee;color:#333;margin-top:9px;font-size:14px;padding:11px}
+  .pace{margin:20px 0 0;font-size:14px;color:#666}
+  .good{color:#357a52}.behind{color:#a0523b}
+  .reset{margin-top:18px;background:none;color:#999;font-size:12px;padding:5px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>61 in 43</h1>
+  <div class="sub">Beer progress tracker</div>
+  <div class="circle" id="circle" style="--progress:0%">
+    <div class="inner">
+      <div><div class="num" id="count">0</div><div class="label">of 61</div></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="left">61</b><span>left</span></div>
+    <div class="stat"><b id="days">43</b><span>days left</span></div>
+    <div class="stat"><b id="daily">1.42</b><span>needed / day</span></div>
+  </div>
+  <button onclick="addBeer()">🍺 Add a beer</button>
+  <button class="undo" onclick="undo()">Undo last</button>
+  <div class="pace" id="pace"></div>
+  <button class="reset" onclick="resetAll()">Reset tracker</button>
+</div>
+<script>
+const TOTAL=61, DAYS=43;
+const KEY='beer61-progress-v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'{"count":0,"start":null}');
+function save(){localStorage.setItem(KEY,JSON.stringify(data)); render();}
+function addBeer(){ if(!data.start) data.start=new Date().toISOString(); if(data.count<TOTAL){data.count++;save();}}
+function undo(){if(data.count>0){data.count--;save();}}
+function resetAll(){if(confirm('Reset your progress?')){data={count:0,start:null};save();}}
+function render(){
+  const c=data.count, left=Math.max(TOTAL-c,0), pct=Math.min(c/TOTAL*100,100);
+  document.getElementById('count').textContent=c;
+  document.getElementById('left').textContent=left;
+  document.getElementById('circle').style.setProperty('--progress',pct+'%');
+  let elapsed=0;
+  if(data.start) elapsed=Math.min(DAYS,Math.max(0,Math.floor((Date.now()-new Date(data.start))/86400000)));
+  const days=Math.max(DAYS-elapsed,0);
+  document.getElementById('days').textContent=days;
+  const needed=days?left/days:0;
+  document.getElementById('daily').textContent=needed.toFixed(2);
+  const expected=Math.min(TOTAL, (elapsed/DAYS)*TOTAL);
+  const diff=c-expected;
+  const pace=document.getElementById('pace');
+  if(c>=TOTAL){pace.textContent='🎉 Goal complete!';pace.className='pace good';}
+  else if(!data.start){pace.textContent='Tap “Add a beer” to start your 43-day tracker.';pace.className='pace';}
+  else if(diff>=0){pace.textContent='You’re '+Math.floor(diff)+' beer'+(Math.floor(diff)==1?'':'s')+' ahead of pace.';pace.className='pace good';}
+  else{pace.textContent='You’re '+Math.ceil(-diff)+' beer'+(Math.ceil(-diff)==1?'':'s')+' behind pace.';pace.className='pace behind';}
+}
+render();
+setInterval(render,60000);
+</script>
+</body>
+</html>
